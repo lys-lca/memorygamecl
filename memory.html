@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MemoryBlast 🧠</title>
+  <link rel="stylesheet" href="memory.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- SETUP SCREEN -->
+  <div id="setup-screen" class="screen active">
+    <div class="setup-card">
+      <div class="logo">Memory<span>Blast</span> 🧠</div>
+      <p class="tagline">Flip, match, and master your ICT terms!</p>
+
+      <div class="field-group">
+        <label>Game Mode</label>
+        <div class="mode-btns">
+          <button class="mode-btn active" data-mode="solo">
+            <span class="mode-icon">⏱️</span>
+            <span class="mode-name">Solo</span>
+            <span class="mode-desc">Beat the clock</span>
+          </button>
+          <button class="mode-btn" data-mode="2player">
+            <span class="mode-icon">🆚</span>
+            <span class="mode-name">2 Players</span>
+            <span class="mode-desc">Take turns</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="solo-options">
+        <div class="field-group">
+          <label>Time Limit</label>
+          <div class="team-count-btns">
+            <button class="count-btn" data-time="60">1 min</button>
+            <button class="count-btn active" data-time="120">2 min</button>
+            <button class="count-btn" data-time="180">3 min</button>
+            <button class="count-btn" data-time="0">No limit</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="player-options" class="hidden">
+        <div class="field-group">
+          <div class="team-name-row">
+            <div class="team-dot" style="background:#ef4444"></div>
+            <input type="text" id="p1-name" placeholder="Player 1 name" value="Player 1" />
+          </div>
+          <div class="team-name-row">
+            <div class="team-dot" style="background:#3b82f6"></div>
+            <input type="text" id="p2-name" placeholder="Player 2 name" value="Player 2" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Number of Pairs</label>
+        <div class="team-count-btns">
+          <button class="count-btn" data-pairs="6">6</button>
+          <button class="count-btn active" data-pairs="8">8</button>
+          <button class="count-btn" data-pairs="12">12</button>
+          <button class="count-btn" data-pairs="16">16</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Card Style</label>
+        <div class="team-count-btns">
+          <button class="count-btn active" data-style="acronym">Acronym ↔ Full name</button>
+          <button class="count-btn" data-style="hint">Term ↔ Hint</button>
+          <button class="count-btn" data-style="mix">Mix both</button>
+        </div>
+      </div>
+
+      <button id="start-btn" class="start-btn">🚀 Start Game!</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen">
+    <div id="game-header">
+      <div id="header-left">
+        <div id="timer-wrap" class="stat-box hidden">
+          <span class="stat-label">Time</span>
+          <span id="timer-display">2:00</span>
+        </div>
+        <div id="moves-wrap" class="stat-box">
+          <span class="stat-label" id="moves-label">Moves</span>
+          <span id="moves-display">0</span>
+        </div>
+      </div>
+      <div id="header-center">
+        <div class="logo small">Memory<span>Blast</span></div>
+      </div>
+      <div id="header-right">
+        <div id="pairs-wrap" class="stat-box">
+          <span class="stat-label">Matched</span>
+          <span id="pairs-display">0 / 0</span>
+        </div>
+        <div id="turn-wrap" class="stat-box hidden">
+          <span class="stat-label">Turn</span>
+          <span id="turn-display"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2-player score bar -->
+    <div id="score-bar" class="hidden">
+      <div class="p-score" id="p1-score-card">
+        <span class="p-name" id="p1-score-name">Player 1</span>
+        <span class="p-pts" id="p1-score-pts">0</span>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="p-score" id="p2-score-card">
+        <span class="p-name" id="p2-score-name">Player 2</span>
+        <span class="p-pts" id="p2-score-pts">0</span>
+      </div>
+    </div>
+
+    <div id="board"></div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="result-screen" class="screen">
+    <div class="result-card">
+      <div class="confetti-wrap" id="confetti"></div>
+      <div id="result-trophy">🎉</div>
+      <h1 id="result-title"></h1>
+      <div id="result-stats"></div>
+      <button id="play-again-btn" class="start-btn">🔄 Play Again</button>
+    </div>
+  </div>
+
+  <!-- MATCH FLASH -->
+  <div id="match-flash" class="match-flash hidden">✅ Match!</div>
+
+  <script src="data-ict.js"></script>
+  <script src="memory.js"></script>
+</body>
+</html>
