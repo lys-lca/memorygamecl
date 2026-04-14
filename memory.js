@@ -2,8 +2,7 @@
    MEMORYBLAST — GAME LOGIC
    =========================== */
 
-// ── Config & State ──────────────────────────────────────
-let cfg = {
+var cfg = {
   mode:      'solo',
   timeLimit: 120,
   numPairs:  8,
@@ -12,7 +11,7 @@ let cfg = {
   p2Name:    'Player 2',
 };
 
-let state = {
+var state = {
   cards:         [],
   flipped:       [],
   moves:         0,
@@ -26,84 +25,92 @@ let state = {
   startTime:     0,
 };
 
-// ── Event wiring (wait for DOM) ──────────────────────────
-// DOM is ready (scripts are at end of body)
-
-  document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      cfg.mode = btn.dataset.mode;
-      document.getElementById('solo-options').classList.toggle('hidden', cfg.mode !== 'solo');
-      document.getElementById('player-options').classList.toggle('hidden', cfg.mode !== '2player');
-    });
-  });
-
-  document.querySelectorAll('.count-btn[data-time]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.count-btn[data-time]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      cfg.timeLimit = parseInt(btn.dataset.time);
-    });
-  });
-
-  document.querySelectorAll('.count-btn[data-pairs]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.count-btn[data-pairs]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      cfg.numPairs = parseInt(btn.dataset.pairs);
-    });
-  });
-
-  document.querySelectorAll('.count-btn[data-style]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.count-btn[data-style]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      cfg.cardStyle = btn.dataset.style;
-    });
-  });
-
-  document.getElementById('start-btn').addEventListener('click', startGame);
-  document.getElementById('play-again-btn').addEventListener('click', () => showScreen('setup-screen'));
-
-// end of script
-
-// ── All functions outside DOMContentLoaded so they're global ──
+// ── Helper ───────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  el(id).classList.add('active');
 }
 
-function buildPairs(numPairs, cardStyle) {
-  const pool = [...dataICT].sort(() => Math.random() - 0.5).slice(0, numPairs);
-  const pairs = [];
+// ── Setup button wiring ──────────────────────────────────
+document.querySelectorAll('.mode-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    cfg.mode = btn.dataset.mode;
+    el('solo-options').classList.toggle('hidden', cfg.mode !== 'solo');
+    el('player-options').classList.toggle('hidden', cfg.mode !== '2player');
+  });
+});
 
-  pool.forEach((entry, i) => {
-    let style = cardStyle;
+document.querySelectorAll('.count-btn[data-time]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.count-btn[data-time]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    cfg.timeLimit = parseInt(btn.dataset.time);
+  });
+});
+
+document.querySelectorAll('.count-btn[data-pairs]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.count-btn[data-pairs]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    cfg.numPairs = parseInt(btn.dataset.pairs);
+  });
+});
+
+document.querySelectorAll('.count-btn[data-style]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.count-btn[data-style]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    cfg.cardStyle = btn.dataset.style;
+  });
+});
+
+el('start-btn').addEventListener('click', function() {
+  startGame();
+});
+
+el('play-again-btn').addEventListener('click', function() {
+  showScreen('setup-screen');
+});
+
+// ── Build pairs ──────────────────────────────────────────
+function buildPairs(numPairs, cardStyle) {
+  var shuffled = dataICT.slice().sort(function() { return Math.random() - 0.5; });
+  var pool = shuffled.slice(0, numPairs);
+  var pairs = [];
+
+  for (var i = 0; i < pool.length; i++) {
+    var entry = pool[i];
+    var style = cardStyle;
     if (style === 'mix') style = i % 2 === 0 ? 'acronym' : 'hint';
 
     if (style === 'acronym') {
-      pairs.push(
-        { pairId: i, type: 'acronym', text: entry.acronym },
-        { pairId: i, type: 'full',    text: entry.full    }
-      );
+      pairs.push({ pairId: i, type: 'acronym', text: entry.acronym });
+      pairs.push({ pairId: i, type: 'full',    text: entry.full    });
     } else {
-      pairs.push(
-        { pairId: i, type: 'term', text: entry.acronym },
-        { pairId: i, type: 'hint', text: entry.hint    }
-      );
+      pairs.push({ pairId: i, type: 'term', text: entry.acronym });
+      pairs.push({ pairId: i, type: 'hint', text: entry.hint    });
     }
-  });
+  }
 
-  return pairs.sort(() => Math.random() - 0.5).map((c, idx) => ({
-    ...c, id: idx, flipped: false, matched: false
-  }));
+  pairs.sort(function() { return Math.random() - 0.5; });
+
+  for (var j = 0; j < pairs.length; j++) {
+    pairs[j].id      = j;
+    pairs[j].flipped = false;
+    pairs[j].matched = false;
+  }
+
+  return pairs;
 }
 
+// ── Start game ───────────────────────────────────────────
 function startGame() {
-  cfg.p1Name = document.getElementById('p1-name').value.trim() || 'Player 1';
-  cfg.p2Name = document.getElementById('p2-name').value.trim() || 'Player 2';
+  cfg.p1Name = el('p1-name').value.trim() || 'Player 1';
+  cfg.p2Name = el('p2-name').value.trim() || 'Player 2';
 
   state.cards         = buildPairs(cfg.numPairs, cfg.cardStyle);
   state.flipped       = [];
@@ -115,50 +122,56 @@ function startGame() {
   state.scores        = [0, 0];
   state.startTime     = Date.now();
 
-  if (state.timerInterval) clearInterval(state.timerInterval);
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
 
   showScreen('game-screen');
   setupGameHeader();
   renderBoard();
 
-  if (cfg.mode === 'solo' && cfg.timeLimit > 0) startTimer();
+  if (cfg.mode === 'solo' && cfg.timeLimit > 0) {
+    startTimer();
+  }
 }
 
+// ── Header / HUD ─────────────────────────────────────────
 function setupGameHeader() {
-  const is2p = cfg.mode === '2player';
+  var is2p = cfg.mode === '2player';
+  var showTimer = cfg.mode === 'solo' && cfg.timeLimit > 0;
 
-  document.getElementById('timer-wrap').classList.toggle('hidden', !(cfg.mode === 'solo' && cfg.timeLimit > 0));
-  document.getElementById('turn-wrap').classList.toggle('hidden', !is2p);
-  document.getElementById('score-bar').classList.toggle('hidden', !is2p);
+  el('timer-wrap').classList.toggle('hidden', !showTimer);
+  el('turn-wrap').classList.toggle('hidden', !is2p);
+  el('score-bar').classList.toggle('hidden', !is2p);
+
+  el('pairs-display').textContent = '0 / ' + cfg.numPairs;
+  el('moves-display').textContent = '0';
 
   if (is2p) {
-    document.getElementById('p1-score-name').textContent = cfg.p1Name;
-    document.getElementById('p2-score-name').textContent = cfg.p2Name;
+    el('p1-score-name').textContent = cfg.p1Name;
+    el('p2-score-name').textContent = cfg.p2Name;
     updatePlayerHud();
   }
 
-  document.getElementById('pairs-display').textContent = `0 / ${cfg.numPairs}`;
-  document.getElementById('moves-display').textContent = '0';
-
-  if (cfg.mode === 'solo' && cfg.timeLimit > 0) {
+  if (showTimer) {
     state.timeLeft = cfg.timeLimit;
     updateTimerDisplay();
   }
 }
 
 function updatePlayerHud() {
-  document.getElementById('p1-score-pts').textContent = state.scores[0];
-  document.getElementById('p2-score-pts').textContent = state.scores[1];
-  document.getElementById('turn-display').textContent =
-    state.currentPlayer === 0 ? cfg.p1Name : cfg.p2Name;
-  document.getElementById('turn-display').style.color =
-    state.currentPlayer === 0 ? '#ef4444' : '#3b82f6';
-  document.getElementById('p1-score-card').classList.toggle('active-player', state.currentPlayer === 0);
-  document.getElementById('p2-score-card').classList.toggle('active-player', state.currentPlayer === 1);
+  el('p1-score-pts').textContent = state.scores[0];
+  el('p2-score-pts').textContent = state.scores[1];
+  el('turn-display').textContent = state.currentPlayer === 0 ? cfg.p1Name : cfg.p2Name;
+  el('turn-display').style.color = state.currentPlayer === 0 ? '#ef4444' : '#3b82f6';
+  el('p1-score-card').classList.toggle('active-player', state.currentPlayer === 0);
+  el('p2-score-card').classList.toggle('active-player', state.currentPlayer === 1);
 }
 
+// ── Timer ────────────────────────────────────────────────
 function startTimer() {
-  state.timerInterval = setInterval(() => {
+  state.timerInterval = setInterval(function() {
     state.timeLeft--;
     updateTimerDisplay();
     if (state.timeLeft <= 0) {
@@ -169,57 +182,61 @@ function startTimer() {
 }
 
 function updateTimerDisplay() {
-  const m  = Math.floor(state.timeLeft / 60);
-  const s  = state.timeLeft % 60;
-  const el = document.getElementById('timer-display');
-  el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-  el.classList.toggle('warning', state.timeLeft <= 15);
+  var m  = Math.floor(state.timeLeft / 60);
+  var s  = state.timeLeft % 60;
+  var display = el('timer-display');
+  display.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  display.classList.toggle('warning', state.timeLeft <= 15);
 }
 
+// ── Board ────────────────────────────────────────────────
 function gridCols(total) {
-  const map = { 12: 4, 16: 4, 24: 6, 32: 8 };
-  return map[total] || Math.ceil(Math.sqrt(total));
+  if (total <= 12) return 4;
+  if (total <= 16) return 4;
+  if (total <= 24) return 6;
+  return 8;
 }
 
 function renderBoard() {
-  const board = document.getElementById('board');
-  const cols  = gridCols(state.cards.length);
-  board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  var board = el('board');
+  var cols  = gridCols(state.cards.length);
+  board.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
   board.innerHTML = '';
 
-  state.cards.forEach((card, i) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'card-wrap' +
-      (card.flipped ? ' flipped' : '') +
-      (card.matched ? ' matched' : '');
-    wrap.dataset.idx = i;
-    wrap.innerHTML = `
-      <div class="card-inner">
-        <div class="card-face card-back">🧠</div>
-        <div class="card-face card-front type-${card.type}">${card.text}</div>
-      </div>`;
-
-    if (!card.matched) {
-      wrap.addEventListener('click', () => onCardClick(i));
-    }
-    board.appendChild(wrap);
-  });
+  for (var i = 0; i < state.cards.length; i++) {
+    (function(idx) {
+      var card = state.cards[idx];
+      var wrap = document.createElement('div');
+      wrap.className = 'card-wrap' +
+        (card.flipped ? ' flipped' : '') +
+        (card.matched ? ' matched' : '');
+      wrap.dataset.idx = idx;
+      wrap.innerHTML =
+        '<div class="card-inner">' +
+          '<div class="card-face card-back">🧠</div>' +
+          '<div class="card-face card-front type-' + card.type + '">' + card.text + '</div>' +
+        '</div>';
+      wrap.addEventListener('click', function() { onCardClick(idx); });
+      board.appendChild(wrap);
+    })(i);
+  }
 }
 
 function updateCard(idx) {
-  const card = state.cards[idx];
-  const wrap = document.querySelector(`.card-wrap[data-idx="${idx}"]`);
+  var card = state.cards[idx];
+  var wrap = document.querySelector('.card-wrap[data-idx="' + idx + '"]');
   if (!wrap) return;
   wrap.className = 'card-wrap' +
     (card.flipped ? ' flipped' : '') +
     (card.matched ? ' matched' : '');
 }
 
+// ── Card click ───────────────────────────────────────────
 function onCardClick(idx) {
   if (state.locked) return;
-  const card = state.cards[idx];
+  var card = state.cards[idx];
   if (card.flipped || card.matched) return;
-  if (state.flipped.length === 2) return;
+  if (state.flipped.length >= 2) return;
 
   card.flipped = true;
   updateCard(idx);
@@ -227,21 +244,22 @@ function onCardClick(idx) {
 
   if (state.flipped.length === 2) {
     state.moves++;
-    document.getElementById('moves-display').textContent = state.moves;
+    el('moves-display').textContent = state.moves;
     checkMatch();
   }
 }
 
 function checkMatch() {
-  const [a, b] = state.flipped;
-  const cardA  = state.cards[a];
-  const cardB  = state.cards[b];
-  const isMatch = cardA.pairId === cardB.pairId;
+  var a     = state.flipped[0];
+  var b     = state.flipped[1];
+  var cardA = state.cards[a];
+  var cardB = state.cards[b];
+  var isMatch = cardA.pairId === cardB.pairId;
 
   state.locked = true;
 
   if (isMatch) {
-    setTimeout(() => {
+    setTimeout(function() {
       cardA.matched = true;
       cardB.matched = true;
       updateCard(a);
@@ -253,28 +271,25 @@ function checkMatch() {
       if (cfg.mode === '2player') {
         state.scores[state.currentPlayer]++;
         updatePlayerHud();
-        // same player goes again on a match
       }
 
-      document.getElementById('pairs-display').textContent =
-        `${state.matches} / ${state.totalPairs}`;
-
+      el('pairs-display').textContent = state.matches + ' / ' + state.totalPairs;
       showMatchFlash();
 
       if (state.matches === state.totalPairs) {
-        setTimeout(() => endGame(true), 600);
+        setTimeout(function() { endGame(true); }, 600);
       }
     }, 400);
 
   } else {
-    const wrapA = document.querySelector(`.card-wrap[data-idx="${a}"]`);
-    const wrapB = document.querySelector(`.card-wrap[data-idx="${b}"]`);
-    wrapA?.classList.add('wrong');
-    wrapB?.classList.add('wrong');
+    var wrapA = document.querySelector('.card-wrap[data-idx="' + a + '"]');
+    var wrapB = document.querySelector('.card-wrap[data-idx="' + b + '"]');
+    if (wrapA) wrapA.classList.add('wrong');
+    if (wrapB) wrapB.classList.add('wrong');
 
-    setTimeout(() => {
-      wrapA?.classList.remove('wrong');
-      wrapB?.classList.remove('wrong');
+    setTimeout(function() {
+      if (wrapA) wrapA.classList.remove('wrong');
+      if (wrapB) wrapB.classList.remove('wrong');
       cardA.flipped = false;
       cardB.flipped = false;
       updateCard(a);
@@ -290,70 +305,74 @@ function checkMatch() {
   }
 }
 
+// ── Match flash ──────────────────────────────────────────
 function showMatchFlash() {
-  const el = document.getElementById('match-flash');
-  el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 750);
+  var flash = el('match-flash');
+  flash.classList.remove('hidden');
+  setTimeout(function() { flash.classList.add('hidden'); }, 750);
 }
 
+// ── End game ─────────────────────────────────────────────
 function endGame(completed) {
   if (state.timerInterval) clearInterval(state.timerInterval);
-  const elapsed = Math.round((Date.now() - state.startTime) / 1000);
-  const m = Math.floor(elapsed / 60);
-  const s = elapsed % 60;
-  const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
 
-  const stats = document.getElementById('result-stats');
+  var elapsed = Math.round((Date.now() - state.startTime) / 1000);
+  var m = Math.floor(elapsed / 60);
+  var s = elapsed % 60;
+  var timeStr = m + ':' + (s < 10 ? '0' : '') + s;
+
+  var stats = el('result-stats');
   stats.innerHTML = '';
 
   if (cfg.mode === 'solo') {
-    document.getElementById('result-trophy').textContent = completed ? '🏆' : '⏰';
-    document.getElementById('result-title').textContent  = completed ? 'Puzzle Complete!' : "Time's Up!";
-    addResultRow(stats, 'Pairs Matched', `${state.matches} / ${state.totalPairs}`, state.matches === state.totalPairs);
-    addResultRow(stats, 'Moves Made', state.moves);
-    addResultRow(stats, 'Time Taken', timeStr);
+    el('result-trophy').textContent = completed ? '🏆' : '⏰';
+    el('result-title').textContent  = completed ? 'Puzzle Complete!' : "Time's Up!";
+    addResultRow(stats, 'Pairs Matched', state.matches + ' / ' + state.totalPairs, state.matches === state.totalPairs);
+    addResultRow(stats, 'Moves Made', state.moves, false);
+    addResultRow(stats, 'Time Taken', timeStr, false);
     if (completed && state.moves > 0) {
-      const accuracy = Math.round((state.totalPairs / state.moves) * 100);
-      addResultRow(stats, 'Accuracy', `${accuracy}%`, accuracy >= 70);
+      var accuracy = Math.round((state.totalPairs / state.moves) * 100);
+      addResultRow(stats, 'Accuracy', accuracy + '%', accuracy >= 70);
     }
   } else {
-    const [s0, s1] = state.scores;
-    const tie      = s0 === s1;
-    const winner   = s0 > s1 ? cfg.p1Name : cfg.p2Name;
-    document.getElementById('result-trophy').textContent = tie ? '🤝' : '🏆';
-    document.getElementById('result-title').textContent  = tie ? "It's a Tie!" : `${winner} Wins!`;
-    addResultRow(stats, cfg.p1Name, `${s0} pairs`, s0 > s1);
-    addResultRow(stats, cfg.p2Name, `${s1} pairs`, s1 > s0);
-    addResultRow(stats, 'Total Moves', state.moves);
-    addResultRow(stats, 'Time', timeStr);
+    var s0  = state.scores[0];
+    var s1  = state.scores[1];
+    var tie = s0 === s1;
+    el('result-trophy').textContent = tie ? '🤝' : '🏆';
+    el('result-title').textContent  = tie ? "It's a Tie!" : (s0 > s1 ? cfg.p1Name : cfg.p2Name) + ' Wins!';
+    addResultRow(stats, cfg.p1Name, s0 + ' pairs', s0 > s1);
+    addResultRow(stats, cfg.p2Name, s1 + ' pairs', s1 > s0);
+    addResultRow(stats, 'Total Moves', state.moves, false);
+    addResultRow(stats, 'Time', timeStr, false);
   }
 
   launchConfetti();
-  setTimeout(() => showScreen('result-screen'), 500);
+  setTimeout(function() { showScreen('result-screen'); }, 500);
 }
 
-function addResultRow(container, label, value, highlight = false) {
-  const row = document.createElement('div');
+function addResultRow(container, label, value, highlight) {
+  var row = document.createElement('div');
   row.className = 'result-row' + (highlight ? ' highlight' : '');
-  row.innerHTML = `<span>${label}</span><span class="result-val">${value}</span>`;
+  row.innerHTML = '<span>' + label + '</span><span class="result-val">' + value + '</span>';
   container.appendChild(row);
 }
 
+// ── Confetti ─────────────────────────────────────────────
 function launchConfetti() {
-  const wrap   = document.getElementById('confetti');
+  var wrap   = el('confetti');
   wrap.innerHTML = '';
-  const colors = ['#f9a826','#e94560','#22d3a5','#a855f7','#3b82f6','#ef4444'];
-  for (let i = 0; i < 60; i++) {
-    const c = document.createElement('div');
+  var colors = ['#f9a826','#e94560','#22d3a5','#a855f7','#3b82f6','#ef4444'];
+  for (var i = 0; i < 60; i++) {
+    var c = document.createElement('div');
     c.className = 'confetto';
-    c.style.cssText = `
-      left:${Math.random()*100}%;top:${Math.random()*-50}px;
-      background:${colors[i%colors.length]};
-      width:${6+Math.random()*9}px;height:${6+Math.random()*9}px;
-      animation-duration:${1.4+Math.random()*2}s;
-      animation-delay:${Math.random()*1.2}s;
-      border-radius:${Math.random()>.5?'50%':'2px'};
-    `;
+    c.style.left             = (Math.random() * 100) + '%';
+    c.style.top              = (Math.random() * -50) + 'px';
+    c.style.background       = colors[i % colors.length];
+    c.style.width            = (6 + Math.random() * 9) + 'px';
+    c.style.height           = (6 + Math.random() * 9) + 'px';
+    c.style.animationDuration = (1.4 + Math.random() * 2) + 's';
+    c.style.animationDelay   = (Math.random() * 1.2) + 's';
+    c.style.borderRadius     = Math.random() > 0.5 ? '50%' : '2px';
     wrap.appendChild(c);
   }
 }
